@@ -4,40 +4,40 @@ import subprocess
 import pickle
 import marshal
 
-# 1. eval - выполнение произвольного кода
-user_input = input("Введите выражение: ")
-result = eval(user_input)  # Опасность: выполнение любого кода
-print("Результат eval:", result)
+# 1. eval - arbitrary code execution
+user_input = input("Enter expression: ")
+result = eval(user_input)  # Danger: execution of any code
+print("Result of eval:", result)
 
-# 2. exec - выполнение произвольного кода
-code = input("Введите код: ")
-exec(code)  # Опасность: выполнение любых команд
+# 2. exec - arbitrary code execution
+code = input("Enter the code: ")
+exec(code)  # Danger: Execution of any commands
 
-# 3. os.system - выполнение системных команд
-filename = input("Введите имя файла: ")
-os.system(f"rm {filename}")  # Опасность: инъекция команд
+# 3. os.system - execution of system commands
+filename = input("Enter file name: ")
+os.system(f"rm {filename}")  # Danger: Command injection
 
-# 4. subprocess.Popen - небезопасный вызов процессов
-command = ["ping", input("Введите хост: ")]
-subprocess.Popen(command, shell=True)  # Опасность: shell=True
+# 4. subprocess.Popen - unsafe process invocation
+command = ["ping", input("Enter host: ")]
+subprocess.Popen(command, shell=True)  # Danger: shell=True
 
-# 5. open - небезопасная работа с файлами
-path = input("Введите путь: ")
-with open(path, "w") as f:  # Опасность: перезапись системных файлов
+# 5. open - unsafe file handling
+path = input("Enter path: ")
+with open(path, "w") as f:  # Danger: Overwriting system files
     f.write("Hacked!")
 
-# 6. shutil.rmtree - удаление директорий
-dir_to_delete = input("Удалить директорию: ")
-shutil.rmtree(dir_to_delete)  # Опасность: удаление любых директорий
+# 6. shutil.rmtree - deleting directories
+dir_to_delete = input("Delete directory: ")
+shutil.rmtree(dir_to_delete)  # Danger: Deleting any directories
 
-# 7. os.remove - удаление файлов
-file_to_remove = input("Удалить файл: ")
-os.remove(file_to_remove)  # Опасность: удаление любых файлов
+# 7. os.remove - deleting files
+file_to_remove = input("Delete file: ")
+os.remove(file_to_remove)  # Danger: Deletion of any files
 
-# 8. pickle.load - десериализация данных
-malicious_pickle = input("Введите pickle-данные: ")
-pickle.loads(malicious_pickle.encode())  # Опасность: RCE через десериализацию
+# 8. pickle.load - data deserialization
+malicious_pickle = input("Enter pickle data: ")
+pickle.loads(malicious_pickle.encode())  # Danger: RCE via deserialization
 
-# 9. marshal.load - десериализация байткода
-malicious_marshal = input("Введите marshal-данные: ")
-marshal.loads(malicious_marshal.encode())  # Опасность: выполнение произвольного кода
+# 9. marshal.load - bytecode deserialization
+malicious_marshal = input("Enter marshal data: ")
+marshal.loads(malicious_marshal.encode())  # Danger: Arbitrary code execution

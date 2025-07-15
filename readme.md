@@ -1,138 +1,140 @@
-# **Проверка Python-скриптов на уязвимости и вредоносный код**
+# **Check Python scripts for vulnerabilities and malicious code**
 
-> Простая программа, проверяющая код на опасные функции, например `eval()` или `os.system()`.
-
----
-
-## 1. **Описание функциональности программы**
-
-Программа позволяет:
-
--   Проверять код на наличие опасных функций
--   Выбирать файл для проверки (по умолчанию из `./code/*.py`)
--   Вводить код вручную (с предустановленным примером)
--   Переключаться между вкладками (файл/ручной ввод)
+> A simple program that checks code for dangerous functions, such as `eval()` or `os.system()`.
 
 ---
 
-## 2. **Понимание проблемы**
+## 1. **Description of the program's functionality**
 
-Некоторые функции Python могут представлять угрозу, если используются без надлежащей проверки:
+The program allows you to:
 
-1. **Инъекциям кода**
-   `eval()`, `exec()` – выполняют произвольный код (можно запустить вредоносные команды).
-2. **Выполнению произвольных команд**
-   `os.system()`, `subprocess.Popen()` – выполняют команды системы.
-3. **Доступу к файловой системе**
-   `open()`, `shutil.rmtree()`, `os.remove()` – могут удалить файлы.
-4. **Загрузка данных**
-   `pickle.load()` – при загрузке данных могут выполнить код.
+-   Check code for dangerous functions
+-   Select a file to check (by default from `./code/*.py`)
+-   Enter code manually (with a preset example)
+-   Switch between tabs (file/manual entry)
 
 ---
 
-## 3.**Использование AST (Abstract Syntax Tree)**
+## 2. **Understanding the problem**
 
-Для статического анализа кода без его выполнения используется модуль `ast`.
+Some Python functions can be dangerous if used without proper checking:
 
-Это безопасный способ парсить код и находить опасные узлы, так как **не выполняет код**, а только его анализирует.
-
-### **Как это работает?**
-
-1. Разбираем код в AST (Абстрактное Синтаксическое Дерево).
-2. Проходим по узлам дерева и проверяем вызовы функций.
-3. Если находим использование опасных функций — сообщаем об этом.
-
----
-
-## 4. **Ограничения подхода**
-
-1. **Статический анализ** не отследит динамически созданные имена функций (например, `getattr(os, 'system')('ls')`).
-2. **Ложные срабатывания**: Не все вызовы `eval()` опасны (но лучше перестраховаться).
-3. **Пропущенные угрозы**: Например, использование `pickle` или `yaml.load()`.
+1. **Code injection**
+   `eval()`, `exec()` – execute arbitrary code (can run malicious commands).
+2. **Execute arbitrary commands**
+   `os.system()`, `subprocess.Popen()` – execute system commands.
+3. **Access to the file system**
+   `open()`, `shutil.rmtree()`, `os.remove()` – can delete files.
+4. **Loading data**
+   `pickle.load()` – can execute code when loading data.
 
 ---
 
-## 5. **Дополнительные улучшения безопасности для вашего кода**
+## 3. **Using AST (Abstract Syntax Tree)**
 
-1. **Проверка аргументов**: Например, если `eval()` вызывается с константой, это менее опасно.
-2. **Интеграция с линтерами**: Используйте `flake8` с плагинами, например, `bandit` ([GitHub](https://github.com/PyCQA/bandit)).
-3. **Динамический анализ**: Запуск в песочнице (sandbox) для отслеживания поведения.
+The `ast` module is used for static code analysis without executing it.
 
----
+This is a safe way to parse code and find dangerous nodes, since it **does not execute code**, but only analyzes it.
 
-## 6. **Описание работы программы**
+### **How does it work?**
 
-1. **Вкладка "Ввод кода"**:
-
-    - Пользователь может вставить или написать код вручную.
-    - По умолчанию вставлен пример кода с уязвимостями.
-
-2. **Вкладка "Проверка файла"**:
-
-    - Пользователь выбирает файл из директории `./code` (по умолчанию).
-    - Содержимое файла загружается в текстовое поле.
-    - После загрузки файла программа автоматически переключится на вкладку "Ввод кода", где будет отображен загруженный код.
-
-3. **Кнопка "Проверить код"**:
-
-    - Анализирует код из вкладки "Ввод кода".
-    - Результаты проверки выводятся в поле "Результаты".
-
-4. **Результаты**:
-
-    - Если найдены опасные функции, программа выводит их список с указанием строк.
-    - Пользователь может перейти к найденой ошибке кликнув по элементу списка.
-    - Если ошибок нет, выводится сообщение "Опасных функций не найдено".
-    - Перед каждой проверкой кода старая подсветка удаляется, чтобы избежать наложения подсветки.
+1. We parse the code in AST (Abstract Syntax Tree).
+2. We go through the tree nodes and check function calls.
+3. If we find the use of dangerous functions, we report it.
 
 ---
 
-### **Пример проверки текста**
+## 4. **Limitations of the approach**
 
-1. Вставьте код с уязвимостями:
-
-    ```python
-    import os
-    eval('print("Hello, World!")')
-    os.system('ls')
-    ```
-
-2. Нажмите "Проверить код".
-
-3. В текстовом поле с кодом строки с `eval` и `os.system` будут выделены желтым фоном.
-
-4. В поле результатов появится сообщение:
-    ```
-    Строка 2: Использование опасной функции: eval
-    Строка 3: Использование опасной функции: os.system
-    ```
-
-### **Пример проверки файла**
-
-1. Перейдите на вкладку "Проверка файла".
-2. Нажмите "Выбрать файл" и выберите файл с кодом.
-3. После выбора файла программа переключится на вкладку "Ввод кода", где будет отображен загруженный код.
-4. Нажмите "Проверить код", чтобы увидеть результаты анализа и подсветку уязвимостей.
+1. **Static analysis** will not catch dynamically created function names (e.g. `getattr(os, 'system')('ls')`).
+2. **False positives**: Not all calls to `eval()` are dangerous (but it's better to be safe).
+3. **Missed threats**: For example, using `pickle` or `yaml.load()`.
 
 ---
 
-### **Запуск программы**
+## 5. **Additional security improvements for your code**
 
-1. Сохраните код в директорию на жестком диске.
-2. Создайте директорию `./code` и добавьте туда Python-файлы для проверки.
-3. Запустите программу:
-    ```bash
-    python main.py
-    ```
+1. **Argument checking**: For example, if `eval()` is called with a constant, it is less dangerous.
+2. **Integration with linters**: Use `flake8` with plugins, for example `bandit` ([GitHub](https://github.com/PyCQA/bandit)).
+3. **Dynamic Analysis**: Runs in a sandbox to track behavior.
 
 ---
 
-## 7. **Заключение**
+## 6. **Program Description**
 
-Созданный скрипт — это база для статического анализа. Для профессионального использования лучше комбинировать:
+1. **Code Input Tab**:
 
-1. **Статический анализ** (например, `bandit`, `pylint`).
-2. **Динамический анализ** (например, запуск в изолированной среде).
-3. **Ручной аудит** для сложных случаев.
+-   The user can paste or write the code manually.
+-   A sample code with vulnerabilities is inserted by default.
+
+2. **File Check Tab**:
+
+-   The user selects a file from the `./code` directory (by default).
+-   The file contents are loaded into the text field.
+-   After loading the file, the program will automatically switch to the "Code Input" tab, where the loaded code will be displayed.
+
+3. **"Check Code" Button**:
+
+-   Analyzes the code from the "Code Input" tab.
+-   The check results are displayed in the "Results" field.
+
+4. **Results**:
+
+-   If dangerous functions are found, the program displays a list of them with the lines indicated.
+-   The user can jump to the found error by clicking on the list item.
+-   If there are no errors, the message "No dangerous functions found" is displayed.
+-   Before each code check, the old highlighting is removed to avoid highlighting overlap.
+
+---
+
+### **Text check example**
+
+1. Insert the code with vulnerabilities:
+
+```python
+import os
+eval('print("Hello, World!")')
+os.system('ls')
+```
+
+2. Click "Check code".
+
+3. In the text field with the code, the lines with `eval` and `os.system` will be highlighted in yellow.
+
+4. The message will appear in the results field:
+
+```
+Line 2: Use of dangerous function: eval
+Line 3: Use of dangerous function: os.system
+```
+
+### **File check example**
+
+1. Go to the "File check" tab.
+2. Click "Select file" and select the file with the code.
+3. After selecting the file, the program will switch to the "Enter code" tab, where the loaded code will be displayed.
+4. Click "Check code" to see the analysis results and highlighting of vulnerabilities.
+
+---
+
+### **Running the program**
+
+1. Save the code to a directory on your hard drive.
+2. Create a `./code` directory and add Python files to it for checking.
+3. Run the program:
+
+```bash
+python main.py
+```
+
+---
+
+## 7. **Conclusion**
+
+The created script is the basis for static analysis. For professional use, it is better to combine:
+
+1. **Static analysis** (e.g. `bandit`, `pylint`).
+2. **Dynamic analysis** (e.g. running in an isolated environment).
+3. **Manual audit** for complex cases.
 
 ---

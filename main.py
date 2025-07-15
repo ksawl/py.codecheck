@@ -3,7 +3,7 @@ from tkinter import ttk, filedialog, scrolledtext
 import ast
 import os
 
-# Опасные функции
+# Dangerous functions
 DANGEROUS_FUNCTIONS = {
     "eval",
     "exec",
@@ -18,8 +18,8 @@ DANGEROUS_FUNCTIONS = {
     "marshal.loads",
 }
 
-# Пример кода с уязвимостями
-DANGEROUS_CODE = """# Пример кода с уязвимостями
+# Example of code with vulnerabilities
+DANGEROUS_CODE = """# Example of code with vulnerabilities
 import os
 eval('print("Hello, World!")')
 os.system('ls')
@@ -32,15 +32,15 @@ class CodeAnalyzer:
 
     def analyze_code(self, code):
         """
-        Функция для проверки кода на использование опасных функций:
-        - Парсит код в AST.
-        - Обходит дерево и собирает все нарушения.
+        Function for checking code for dangerous functions:
+        - Parses code into AST.
+        - Traverses the tree and collects all violations.
         """
 
         try:
             tree = ast.parse(code)
         except Exception as e:
-            return [{"error": f"Ошибка синтаксиса: {str(e)}"}]
+            return [{"error": f"Syntax error: {str(e)}"}]
 
         visitor = DangerousVisitor(self.dangerous_functions)
         visitor.visit(tree)
@@ -54,9 +54,9 @@ class DangerousVisitor(ast.NodeVisitor):
 
     def visit_Call(self, node):
         """
-        Проверяем вызовы функций:
-        - Если вызывается функция из списка DANGEROUS_FUNCTIONS, добавляем сообщение об ошибке.
-        - Если вызов через атрибут (например, os.system), то собираем полное имя и проверяем его.
+        Check function calls:
+        - If a function from the DANGEROUS_FUNCTIONS list is called, add an error message.
+        - If the call is via an attribute (for example, os.system), then collect the full name and check it.
         """
 
         if isinstance(node.func, ast.Attribute) and isinstance(
@@ -73,7 +73,7 @@ class DangerousVisitor(ast.NodeVisitor):
                 {
                     "line": node.lineno,
                     "function": func_name,
-                    "message": f"Использование опасной функции: {func_name}",
+                    "message": f"Using a dangerous function: {func_name}",
                 }
             )
         self.generic_visit(node)
@@ -87,96 +87,94 @@ class CodeCheckerApp:
         self.draw()
 
     def draw(self):
-        """Отрисовка интерфейса"""
+        """Drawing the interface"""
 
-        self.root.title("Проверка кода на уязвимости")
+        self.root.title("Checking code for vulnerabilities")
         self.root.geometry("800x600")
 
-        # Основной контейнер
+        # Main container
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Блокнот с вкладками
+        # Notepad with tabs
         self.notebook = ttk.Notebook(main_frame)
         self.notebook.pack(fill=tk.BOTH, expand=True)
 
-        # Вкладка 1: Ввод кода вручную
+        # Tab 1: Entering the code manually
         self.code_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.code_tab, text="Ввод кода")
+        self.notebook.add(self.code_tab, text="Enter code")
 
-        # Поле ввода кода
+        # Code input field
         self.code_input = scrolledtext.ScrolledText(
             self.code_tab, wrap=tk.WORD, width=80, height=15
         )
         self.code_input.pack(fill=tk.BOTH, expand=True)
         self.code_input.tag_configure("danger", background="yellow")
 
-        # Добавление примера кода с уязвимостями
+        # Adding a code example with vulnerabilities
         self.code_input.insert(tk.END, DANGEROUS_CODE)
 
-        # Вкладка 2: Загрузка файла
+        # Tab 2: File Upload
         self.file_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.file_tab, text="Проверка файла")
+        self.notebook.add(self.file_tab, text="Checking the file")
 
-        ttk.Label(self.file_tab, text="Выберите файл для проверки:").pack(pady=10)
-        ttk.Button(self.file_tab, text="Выбрать файл", command=self.load_file).pack()
+        ttk.Label(self.file_tab, text="Select file to check:").pack(pady=10)
+        ttk.Button(self.file_tab, text="Select file", command=self.load_file).pack()
 
-        # Кнопка проверки
-        ttk.Button(main_frame, text="Проверить код", command=self.check_code).pack(
-            pady=5
-        )
+        # Check button
+        ttk.Button(main_frame, text="Check code", command=self.check_code).pack(pady=5)
 
-        # Список результатов
+        # List of results
         self.result_list = ttk.Treeview(
             main_frame,
             columns=("line", "message"),
             show="headings",
             selectmode="browse",
         )
-        self.result_list.heading("line", text="Строка")
+        self.result_list.heading("line", text="Line")
         self.result_list.column("line", width=10)
-        self.result_list.heading("message", text="Сообщение")
+        self.result_list.heading("message", text="Message")
         self.result_list.column("message", width=600)
         self.result_list.pack(fill=tk.BOTH, expand=True)
         self.result_list.bind("<<TreeviewSelect>>", self.on_result_select)
 
     def load_file(self):
-        """Открывает диалог выбора файла"""
+        """Opens a file selection dialog"""
 
         file_path = filedialog.askopenfilename(
             initialdir="./code",
             filetypes=(("Python files", "*.py"), ("All files", "*.*")),
         )
         if not file_path or not os.path.isfile(file_path):
-            self.result_text.insert(tk.END, "Ошибка: выберите корректный файл\n")
+            self.result_text.insert(tk.END, "Error: Please select a valid file\n")
         else:
             with open(file_path, "r", encoding="utf-8") as f:
                 self.code_input.delete(1.0, tk.END)
                 self.code_input.insert(tk.END, f.read())
-            # Переключение на вкладку "Ввод кода"
+            # Switch to the "Enter Code" tab
             self.notebook.select(self.code_tab)
-            # Очистка предыдущих результатов
+            # Clearing previous results
             self.result_list.delete(*self.result_list.get_children())
 
     def check_code(self):
         """
-        Функция, вызываемая при нажатии кнопки "Проверить код":
-        - Считывает код из текстового поля.
-        - Проверяет код.
-        - Выводит результаты в отдельном текстовом поле.
+        The function called when the "Check Code" button is clicked:
+        - Reads the code from the text field.
+        - Checks the code.
+        - Displays the results in a separate text field.
         """
 
         code = self.code_input.get(1.0, tk.END)
         results = self.analyzer.analyze_code(code)
 
-        # Очистка предыдущих результатов
+        # Clearing previous results
         self.result_list.delete(*self.result_list.get_children())
         self.code_input.tag_remove("danger", 1.0, tk.END)
 
-        # Заполнение списка результатов
+        # Filling the results list
         self.results = []
         if not results:
-            good_message = "Опасных функций не найдено.\n"
+            good_message = "No dangerous functions found.\n"
             self.results.append({"line": 0, "message": good_message})
             self.result_list.insert("", tk.END, values=(0, good_message))
 
@@ -189,23 +187,23 @@ class CodeCheckerApp:
                 self.result_list.insert(
                     "", tk.END, values=(issue["line"], issue["message"])
                 )
-                # Подсветка строки с уязвимостью
+                # Highlighting a line with vulnerability
                 self.highlight_line(issue["line"])
 
-        # Выделение первого элемента
+        # Selecting the first element
         if self.results:
             self.result_list.selection_set(self.result_list.get_children()[0])
             self.result_list.focus(self.result_list.get_children()[0])
 
     def highlight_line(self, line_number):
-        """Посветка строки с уязвимостью"""
+        """Highlighting a line with vulnerability"""
 
         start = f"{line_number}.0"
         end = f"{line_number + 1}.0"
         self.code_input.tag_add("danger", start, end)
 
     def on_result_select(self, event):
-        """Callback функция списка результатов"""
+        """Callback function of the results list"""
 
         selection = self.result_list.selection()
         if not selection:
